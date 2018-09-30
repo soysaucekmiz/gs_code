@@ -49,9 +49,14 @@ $sqlTagSearch = "SELECT * FROM gs_bmtag_table WHERE tag_name = '".$category."'";
 $stmtTagSearch = $pdo->prepare($sqlTagSearch);
 $statusTagSearch = $stmtTagSearch->execute();
 $tagSearch = $stmtTagSearch->fetch(PDO::FETCH_ASSOC);
+$tag_id = $tagSearch["id"];
 
 $view = "";
 $categoryLen = strlen($category);
+var_dump($statusTagSearch);
+var_dump($categoryLen);
+var_dump($tagSearch);
+var_dump($tag_id);
 
 /*
  * test
@@ -69,11 +74,11 @@ if($statusTagSearch == false){
     sqlError($stmtTagSearch);
     $view = "SQLエラー";
 
-}else if($categoryLen=0){
+}else if($categoryLen==0){
     $view = "カテゴリがNULL";
-    exit("$categoryはNULLです。");
+    exit("categoryはNULLです。");
 
-}else if($tagSearch = false){
+}else if($tagSearch===false){ // 元の書き方$tagSearch == false
     // gs_bmtag_tableに該当する値が存在しない場合
 
     // gs_bmtag_table -> $categoryをtag_nameに格納
@@ -97,18 +102,23 @@ if($statusTagSearch == false){
 
     // gs_bmtag_table -> すでに存在するため必要なし
     // gs_bmtag_bind -> 新規のgs_bm_tableのレコードと既存のタグidをマッピング登録
-    while($result = $stmtTagSearch->fetch(PDO::FETCH_ASSOC)){
+
+    /*
+    一旦除外
+    // while($result = $stmtTagSearch->fetch(PDO::FETCH_ASSOC)){
+    */
+
         // $view .= "id: ".$result["id"].", "."tag_name: ".$result["tag_name"]."<br>"; // $result[]でgs_bmtag_tableで照合した値を取り出すtest ok
         $sqlBindInsert = "INSERT INTO gs_bmtag_bind (bm_id, tag_id) VALUE (:bm_id, :tag_id)";
         $stmtBindInsert = $pdo->prepare($sqlBindInsert);
         $stmtBindInsert->bindValue(':bm_id', $bm_id, PDO::PARAM_INT);
-        $stmtBindInsert->bindValue(':tag_id', $result["id"], PDO::PARAM_INT);
+        $stmtBindInsert->bindValue(':tag_id', $tag_id, PDO::PARAM_INT);
         $statusBindInsert = $stmtBindInsert->execute();
 
         // bm_id, tag_id, tag_nameを確認
-        $view = "既存タグパターン, bm_id: ".$bm_id.", tag_id: ".$result["id"].", tag_name: ".$category;
+        $view = "既存タグパターン, bm_id: ".$bm_id.", tag_id: ".$tag_id.", tag_name: ".$category;
 
-    }
+    // }
 }
 
 /* 以下、リライト */
@@ -169,7 +179,7 @@ if($statusTagSearch == false){
 
 <body>
     <div>
-        タグ情報：<?=$view?>
+        if文判定：<?=$view?>
     </div>
 </body>
 
