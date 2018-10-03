@@ -47,64 +47,6 @@ $stmtBindSearch = $pdo->prepare($sqlBindSearch);
 $statusBindSearch = $stmtBindSearch->execute();
 $bindSearch = $stmtBindSearch->fetch(PDO::FETCH_ASSOC);
 $bind_id = $bindSearch["id"];
-var_dump($bind_id);
-
-// // 実際の処理 ver.1
-// // $categoryが更新されてない場合
-// if($category == $category_origin){
-//     // 処理なしで終了
-//     echo "categoryは変更されていません。";
-
-// // $categoryが更新された場合
-// }else{
-//     // sqlエラーの場合
-//     if($statusTagSearch==false){
-//         sqlError($stmtTagSearch);
-
-//     // 新しい$categoryがNULLの場合
-//     }else if($categoryLen==0){
-//         // gs_bmtag_tableは対応なし
-//         // gs_bmtag_bindからid=$idのレコードを削除
-//         $sqlBindDelete = "DELETE FROM gs_bmtag_bind WHERE id=:id";
-//         $stmtBindDelete = $pdo->prepare($sqlBindDelete);
-//         $stmtBindDelete->bindValue(":id", $bind_id, PDO::PARAM_INT);
-//         $statusBindDelete = $stmtBindDelete->execute();
-//         echo "新categoryがNULLです。";
-
-//     // $categoryが既存のタグと一致しない場合
-//     }else if($tagSearch===false){
-//         // gs_bmtag_table: 次のidを取得し、タグ登録
-//         $sqlTagInsert = "INSERT INTO gs_bmtag_table (tag_name) VALUE (:tag_name)";
-//         $stmtTagInsert = $pdo->prepare($sqlTagInsert);
-//         $stmtTagInsert->bindValue(":tag_name", $category, PDO::PARAM_STR);
-//         $statusTagInsert = $stmtTagInsert->execute();
-//         $tag_id = $pdo->lastInsertId();
-
-//         // gs_bmtag_bind: bm_id=$id, tag_id=次のAI値 で更新
-//         $sqlBindUpdate = "UPDATE gs_bmtag_bind SET bm_id=:bm_id, tag_id=:tag_id WHERE id=:id";
-//         $stmtBindUpdate = $pdo->prepare($sqlBindUpdate);
-//         $stmtBindUpdate->bindValue(":bm_id", $id, PDO::PARAM_INT);
-//         $stmtBindUpdate->bindValue(":tag_id", $tag_id, PDO::PARAM_INT);
-//         $stmtBindUpdate->bindValue(":id", $bind_id, PDO::PARAM_INT);
-//         $statusBindUpdate = $stmtBindUpdate->execute();
-
-//         echo "新categoryを新規タグとして登録ました。";
-
-//     // $categoryが既存のタグと一致する場合
-//     }else{
-//         // gs_bmtag_tableのid=$tag_idを取得し、更新はしない
-//         // gs_bmtag_bindをUPDATE bm_id=$id, tag_id=$tag_id
-//         $sqlBindUpdate = "UPDATE gs_bmtag_bind SET bm_id=:bm_id, tag_id=:tag_id WHERE id=:id";
-//         $stmtBindUpdate = $pdo->prepare($sqlBindUpdate);
-//         $stmtBindUpdate->bindValue(":bm_id", $id, PDO::PARAM_INT);
-//         $stmtBindUpdate->bindValue(":tag_id", $tag_id, PDO::PARAM_INT);
-//         $stmtBindUpdate->bindValue(":id", $bind_id, PDO::PARAM_INT);
-//         $statusBindUpdate = $stmtBindUpdate->execute();
-
-//         echo "新categoryが既存タグの中から見つかりました。";
-//     }
-// }
-
 
 // 実際の処理 ver.2
 // $categoryが更新されてない場合
@@ -189,43 +131,6 @@ if($category == $category_origin){
         }
     }
 }
-
-
-
-
-
-/* 
-
-gs_bmtag_bindのidを取得
-$category_originがNULLの場合はtag_idもbind_idもない
-
-*/
-
-/* メモ
- * 更新画面からのタグ更新は一部実装できた
- * 
- * 動作確認できた箇所
- * 変更前カテゴリがNULLでないパターン
- *  更新なし
- *  既存タグ
- *  新規タグ
- *  NULL
- * 
- * 動作未確認
- * 変更前カテゴリがNULLのパターン
- * 
- * 
- * 動作不良を確認
- * bind_idがないbmとtagの組み合わせ
- *  タグ付け機能未実装時のデータ
- *  mySQL Adminから追加したデータ（想定）
- *      =>bind_idが見つからない場合の処理を書く必要あり
- *      とりあえずタグ付け機能未実装時のデータは削除で良いのでは？
- * 
- * 
- * 
- * 
- */
 
 
 ?>
