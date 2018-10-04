@@ -25,6 +25,11 @@ if(isset($_GET["tag_id"])){
     $sql .= "WHERE tag_id = ".$tag_id." ";
 }
 
+if(isset($_GET["searchKw"])){
+    $searchKw = $_GET["searchKw"];
+    $sql .= "WHERE book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ";
+}
+
 $sql .= "ORDER BY gs_bm_table.id";
 $stmt = $pdo->prepare($sql);
 $status = $stmt->execute();
@@ -35,15 +40,13 @@ $view = "";
 if($status==false){
     sqlError($stmt);
 }else{
-    // while($result = $stmt->fetch(PDO::FETCH_ASSOC)){
-    while($result = $stmt->fetch(PDO::FETCH_ASSOC)){ //fetchAllだと動かない
-        // $view .= "<tr>"."<td>".$result["id"]."</td>"."<td>".$result["book"]."</td>"."<td>".$result["author"]."</td>"."<td>".$result["datetime"]."</td>"."<td>".$result["category"]."</td>"."<td>".$result["summary"]."</td>"."<td>".$result["comment"]."</td>"."</tr>";
+    while($result = $stmt->fetch(PDO::FETCH_ASSOC)){ 
         $view .= "<tr>";
         $view .= "<td>".$result["bm_id"]."</td>";
         $view .= "<td>".$result["book"]."</td>";
         $view .= "<td>".$result["author"]."</td>";
         $view .= "<td>".$result["datetime"]."</td>";
-        $view .= '<td><a href="select_test.php?tag_id='.$result["tag_id"].'">'.$result["tag_name"].'</a></td>'; // あとでaタグでtag_idに遷移させる
+        $view .= '<td><a href="select.php?tag_id='.$result["tag_id"].'">'.$result["tag_name"].'</a></td>'; // あとでaタグでtag_idに遷移させる
         $view .= "<td>".$result["summary"]."</td>";
         $view .= "<td>".$result["comment"]."</td>";
         $view .= '<td><a href="update_view.php?id='.$result["bm_id"].'">[更新]</a></td>';
@@ -86,6 +89,9 @@ if($status==false){
             <input type="submit" value="検索">
         </div>
         </form>
+
+        <!-- 全ての一覧 -->
+        <a href="select.php">すべての一覧</a>
 
         <!-- 一覧 -->
         <div class="container jumbotron">

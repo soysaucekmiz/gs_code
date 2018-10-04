@@ -53,6 +53,7 @@ $bind_id = $bindSearch["id"];
 if($category == $category_origin){
     // 処理なしで終了
     echo "tag変更なし";
+    header("Location: select.php");
 
 // $categoryが更新された場合
 }else{
@@ -68,7 +69,7 @@ if($category == $category_origin){
         $stmtBindDelete = $pdo->prepare($sqlBindDelete);
         $stmtBindDelete->bindValue(":id", $bind_id, PDO::PARAM_INT);
         $statusBindDelete = $stmtBindDelete->execute();
-        echo "旧タグ k -> 新タグ NULL";
+        header("Location: select.php");
 
     // $categoryが既存のタグと一致しない場合
     }else if($tagSearch===false){
@@ -86,8 +87,7 @@ if($category == $category_origin){
             $stmtBindInsert->bindValue(":bm_id", $id, PDO::PARAM_INT);
             $stmtBindInsert->bindValue(":tag_id", $tag_id, PDO::PARAM_INT);
             $statusBindInsert = $stmtBindInsert->execute();
-
-            echo "旧タグ NULL -> 新タグ n+1";
+            header("Location: select.php");
 
         // $category_originがNULLでない場合（$categoryOriginLen>0）
         }else{
@@ -98,8 +98,8 @@ if($category == $category_origin){
             $stmtBindUpdate->bindValue(":tag_id", $tag_id, PDO::PARAM_INT);
             $stmtBindUpdate->bindValue(":id", $bind_id, PDO::PARAM_INT);
             $statusBindUpdate = $stmtBindUpdate->execute();
+            header("Location: select.php");
 
-            echo "旧タグ k -> 新タグ n+1";
         }
 
     // $categoryが既存のタグと一致する場合
@@ -113,8 +113,7 @@ if($category == $category_origin){
             $stmtBindInsert->bindValue(":bm_id", $id, PDO::PARAM_INT);
             $stmtBindInsert->bindValue(":tag_id", $tag_id, PDO::PARAM_INT);
             $statusBindInsert = $stmtBindInsert->execute();
-
-            echo "旧タグ NULL -> 新タグ k";
+            header("Location: select.php");
 
         // $category_originがNULLでない場合
         }else{
@@ -125,8 +124,7 @@ if($category == $category_origin){
             $stmtBindUpdate->bindValue(":tag_id", $tag_id, PDO::PARAM_INT);
             $stmtBindUpdate->bindValue(":id", $bind_id, PDO::PARAM_INT);
             $statusBindUpdate = $stmtBindUpdate->execute();
-
-            echo "旧タグ k -> 新タグ l";
+            header("Location: select.php");
 
         }
     }

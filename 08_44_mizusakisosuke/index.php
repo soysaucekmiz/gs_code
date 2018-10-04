@@ -1,13 +1,4 @@
 <?php
-// include("funcs.php");
-
-// // DB接続
-// $pdo = db_connect();
-
-// // gs_tag_tableを取得
-// $sqlTag = "SELECT * FROM gs_tag_table";
-// $stmtTag = $pdo->prepare($sqlTag);
-// $statusTag = $stmtTag->execute();
 
 ?>
 
