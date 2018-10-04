@@ -6,26 +6,16 @@ include("funcs.php");
 //1. DB接続
 $pdo = db_connect();
 
-$sql = "";
-$sql .= "SELECT "; 
-$sql .= "gs_bm_table.id AS bm_id, ";
-$sql .= "gs_bm_table.book AS book, ";
-$sql .= "gs_bm_table.author AS author, ";
-$sql .= "gs_bm_table.datetime AS datetime, ";
-$sql .= "gs_bm_table.summary AS summary, ";
-$sql .= "gs_bm_table.comment AS comment, ";
-$sql .= "gs_bmtag_table.id AS tag_id, ";
-$sql .= "gs_bmtag_table.tag_name AS tag_name ";
-$sql .= "FROM ";
-$sql .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
-$sql .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
 
-if(isset($_GET["tag_id"])){
-    $tag_id = $_GET["tag_id"];
-    $sql .= "WHERE tag_id = ".$tag_id." ";
+//2. 検索条件の受取、SQL作成
+if(isset($_GET["searchKw"])){
+    $searchKw = $_GET["searchKw"];
+    // $sql = "SELECT * FROM gs_bm_table WHERE book LIKE '%".$searchKw."%'"; //一旦書籍名からのみ
+    $sql = "SELECT * FROM gs_bm_table WHERE book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%'"; 
+}else{
+    $sql = "SELECT * FROM gs_bm_table";
 }
-
-$sql .= "ORDER BY gs_bm_table.id";
+// $stmt = $pdo->prepare($sql);
 $stmt = $pdo->prepare($sql);
 $status = $stmt->execute();
 
@@ -39,18 +29,19 @@ if($status==false){
     while($result = $stmt->fetch(PDO::FETCH_ASSOC)){ //fetchAllだと動かない
         // $view .= "<tr>"."<td>".$result["id"]."</td>"."<td>".$result["book"]."</td>"."<td>".$result["author"]."</td>"."<td>".$result["datetime"]."</td>"."<td>".$result["category"]."</td>"."<td>".$result["summary"]."</td>"."<td>".$result["comment"]."</td>"."</tr>";
         $view .= "<tr>";
-        $view .= "<td>".$result["bm_id"]."</td>";
+        $view .= "<td>".$result["id"]."</td>";
         $view .= "<td>".$result["book"]."</td>";
         $view .= "<td>".$result["author"]."</td>";
         $view .= "<td>".$result["datetime"]."</td>";
-        $view .= '<td><a href="select_test.php?tag_id='.$result["tag_id"].'">'.$result["tag_name"].'</a></td>'; // あとでaタグでtag_idに遷移させる
+        $view .= "<td>".$result["category"]."</td>";
         $view .= "<td>".$result["summary"]."</td>";
         $view .= "<td>".$result["comment"]."</td>";
-        $view .= '<td><a href="update_view.php?id='.$result["bm_id"].'">[更新]</a></td>';
-        $view .= '<td><a href="delete.php?id='.$result["bm_id"].'">[削除]</a></td>';
+        $view .= '<td><a href="update_view.php?id='.$result["id"].'">[更新]</a></td>';
+        $view .= '<td><a href="delete.php?id='.$result["id"].'">[削除]</a></td>';
         $view .= "</tr>";
     }
 }
+
 
 ?>
 
