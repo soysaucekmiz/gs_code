@@ -4,6 +4,7 @@ session_start();
 //共通関数の呼び出し
 include("funcs.php");
 chkSsid();
+$user_id = $_SESSION["id"];
 
 
 //1. DB接続
@@ -17,22 +18,28 @@ $sql .= "gs_bm_table.author AS author, ";
 $sql .= "gs_bm_table.datetime AS datetime, ";
 $sql .= "gs_bm_table.summary AS summary, ";
 $sql .= "gs_bm_table.comment AS comment, ";
+$sql .= "gs_bm_table.user_id AS user_id, "; // テスト確認用、あとで消す
 $sql .= "gs_bmtag_table.id AS tag_id, ";
 $sql .= "gs_bmtag_table.tag_name AS tag_name ";
 $sql .= "FROM ";
 $sql .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
 $sql .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
 
+$sql .= "WHERE user_id = ".$user_id." ";
+
 if(isset($_GET["tag_id"])){
     $tag_id = $_GET["tag_id"];
-    $sql .= "WHERE tag_id = ".$tag_id." ";
+    // $sql .= "WHERE tag_id = ".$tag_id." ";
+    $sql .= "AND tag_id = ".$tag_id." ";
 }
 
 if(isset($_GET["searchKw"])){
     $searchKw = $_GET["searchKw"];
-    $sql .= "WHERE book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ";
+    // $sql .= "WHERE book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ";
+    $sql .= "AND book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ";    
 }
 
+// $sql .= "WHERE user_id = ".$user_id." ";
 $sql .= "ORDER BY gs_bm_table.id";
 $stmt = $pdo->prepare($sql);
 $status = $stmt->execute();
@@ -52,6 +59,7 @@ if($status==false){
         $view .= '<td><a href="select.php?tag_id='.$result["tag_id"].'">'.$result["tag_name"].'</a></td>'; // あとでaタグでtag_idに遷移させる
         $view .= "<td>".$result["summary"]."</td>";
         $view .= "<td>".$result["comment"]."</td>";
+        $view .= "<td>".$result["user_id"]."</td>"; // テスト確認用、あとで消す
         $view .= '<td><a href="update_view.php?id='.$result["bm_id"].'">[更新]</a></td>';
         $view .= '<td><a href="delete.php?id='.$result["bm_id"].'">[削除]</a></td>';
         $view .= "</tr>";
@@ -70,6 +78,7 @@ $sqlTagCount .= "FROM ";
 // $sqlTagCount .= "gs_bmtag_bind LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
 $sqlTagCount .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
 $sqlTagCount .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
+$sqlTagCount .= "WHERE user_id = ".$user_id." ";
 $sqlTagCount .= "GROUP BY tag_id ";
 $sqlTagCount .= "ORDER BY COUNT(*) DESC";
 
@@ -141,6 +150,7 @@ if($statusTagCount==false){
             <th>カテゴリ</th>
             <th>要約</th>
             <th>感想</th>
+            <th>ユーザーID</th> <!-- テスト用、あとで消す -->
             <th>更新</th>
             <th>削除</th>
         </tr>
