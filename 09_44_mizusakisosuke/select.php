@@ -6,6 +6,18 @@ include("funcs.php");
 chkSsid();
 $user_id = $_SESSION["id"];
 
+// ページネーション (1)
+if(isset($_GET["page"])){
+    $page = $_GET["page"];
+}else{
+    $page = 1;
+}
+if($page > 1){
+    $start = ($page * 10) - 10;
+}else{
+    $start = 0;
+}
+
 
 //1. DB接続
 $pdo = db_connect();
@@ -19,8 +31,10 @@ $sql .= "gs_bm_table.datetime AS datetime, ";
 $sql .= "gs_bm_table.summary AS summary, ";
 $sql .= "gs_bm_table.comment AS comment, ";
 $sql .= "gs_bm_table.user_id AS user_id, "; // テスト確認用、あとで消す
-$sql .= "gs_bmtag_table.id AS tag_id, ";
-$sql .= "gs_bmtag_table.tag_name AS tag_name ";
+// $sql .= "gs_bmtag_table.id AS tag_id, ";
+$sql .= "GROUP_CONCAT(gs_bmtag_table.id SEPARATOR ',') AS tag_ids, "; // test
+// $sql .= "gs_bmtag_table.tag_name AS tag_name ";
+$sql .= "GROUP_CONCAT(gs_bmtag_table.tag_name SEPARATOR ',') AS tag_names "; // test
 $sql .= "FROM ";
 $sql .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
 $sql .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
@@ -29,21 +43,23 @@ $sql .= "WHERE user_id = ".$user_id." ";
 
 if(isset($_GET["tag_id"])){
     $tag_id = $_GET["tag_id"];
-    // $sql .= "WHERE tag_id = ".$tag_id." ";
     $sql .= "AND tag_id = ".$tag_id." ";
+    // memo: 
+    //この書き方だと複数タグがあるレコードでも、
+    // ?tag_id=kで絞り込まれた場合にはkしか表示されなくなる
 }
 
 if(isset($_GET["searchKw"])){
     $searchKw = $_GET["searchKw"];
-    // $sql .= "WHERE book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ";
-    $sql .= "AND book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ";    
+    $sql .= "AND ( book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ) ";    
 }
 
-// $sql .= "WHERE user_id = ".$user_id." ";
-$sql .= "ORDER BY gs_bm_table.id";
+$sql .= "GROUP BY bm_id "; // test
+
+$sql .= "ORDER BY gs_bm_table.id ";
+$sql .= "LIMIT $start, 10";
 $stmt = $pdo->prepare($sql);
 $status = $stmt->execute();
-
 
 //3. データ表示
 $view = "";
@@ -51,12 +67,23 @@ if($status==false){
     sqlError($stmt);
 }else{
     while($result = $stmt->fetch(PDO::FETCH_ASSOC)){ 
+        $tag_id = explode(',', $result["tag_ids"]);
+        $tag_name = explode(',', $result["tag_names"]);
+        // count($tag_id);
+
         $view .= "<tr>";
         $view .= "<td>".$result["bm_id"]."</td>";
         $view .= "<td>".$result["book"]."</td>";
         $view .= "<td>".$result["author"]."</td>";
         $view .= "<td>".$result["datetime"]."</td>";
-        $view .= '<td><a href="select.php?tag_id='.$result["tag_id"].'">'.$result["tag_name"].'</a></td>'; // あとでaタグでtag_idに遷移させる
+        // $view .= '<td><a href="select.php?tag_id='.$result["tag_ids"].'">'.$result["tag_names"].'</a></td>'; // あとでaタグでtag_idに遷移させる
+
+        $view .= '<td>';
+        for($i=0; $i<count($tag_id); $i++){
+            $view .= '<a href="select.php?tag_id='.$tag_id[$i].'">'.$tag_name[$i].' </a>'; // あとでaタグでtag_idに遷移させる
+        }
+        $view .= '</td>';
+
         $view .= "<td>".$result["summary"]."</td>";
         $view .= "<td>".$result["comment"]."</td>";
         $view .= "<td>".$result["user_id"]."</td>"; // テスト確認用、あとで消す
@@ -65,6 +92,64 @@ if($status==false){
         $view .= "</tr>";
     }
 }
+
+
+// ページネーション (2)
+// $sqlPageCount = "SELECT COUNT(*) AS count FROM ";
+
+// test ここから
+$sqlPageCount = "SELECT ";
+$sqlPageCount .= "gs_bm_table.id AS bm_id, ";
+$sqlPageCount .= "GROUP_CONCAT(gs_bmtag_table.id SEPARATOR ',') AS tag_ids, ";
+$sqlPageCount .= "COUNT(distinct bm_id) AS count FROM ";
+// test ここまで
+
+$sqlPageCount .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
+$sqlPageCount .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
+$sqlPageCount .= "WHERE user_id = ".$user_id." ";
+if(isset($_GET["tag_id"])){
+    $tag_id = $_GET["tag_id"];
+    $sqlPageCount .= "AND tag_id = ".$tag_id." ";
+}
+if(isset($_GET["searchKw"])){
+    $searchKw = $_GET["searchKw"];
+    $sqlPageCount .= "AND (book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%') ";    
+}
+
+$sql .= "GROUP BY bm_id"; // test
+
+$stmtPageCount = $pdo->prepare($sqlPageCount);
+$statusPageCount = $stmtPageCount->execute();
+$pageCount = $stmtPageCount->fetch(PDO::FETCH_ASSOC);
+$pageCount = $pageCount["count"];
+$pagenation = ceil($pageCount / 10);
+
+$viewPagenation = "";
+for($i=1; $i<=$pagenation; $i++){
+    $viewPagenation .= '<a href="?page='.$i.'">'.$i.' </a>';
+}
+
+// PagePref & pageNext
+$page = intval($page);
+if($page==1){
+    $viewPagePrev = "";
+    if($page==$pagenation){
+        $viewPageNext = "";
+    }else{
+        $pageNext = $page + 1;
+        $viewPageNext = '<a href="?page='.$pageNext.'">次</a>';
+    }
+}else{
+    $pagePrev = $page - 1;
+    $viewPagePrev = '<a href="?page='.$pagePrev.'">前</a>';
+    if($page==$pagenation){
+        $viewPageNext = "";
+    }else{
+        $pageNext = $page + 1;
+        $viewPageNext = '<a href="?page='.$pageNext.'">次</a>';
+    }
+}
+
 
 // tagの数を数えて降順でならべかえる
 // $sqlTagCount = "SELECT tag_id, count(*) FROM gs_bmtag_bind GROUP BY tag_id ORDER BY count(*) DESC";
@@ -93,7 +178,6 @@ if($statusTagCount==false){
         $tagView .= '<a href="select.php?tag_id='.$tagList["tag_id"].'">'.$tagList["tag_name"].'</a> ';
     }
 }
-
 
 ?>
 
@@ -136,28 +220,35 @@ if($statusTagCount==false){
             <?=$tagView?>
         </div>
 
+        <div>
         <!-- 全ての一覧 -->
-        <a href="select.php">すべての一覧</a>
+            <a href="select.php">すべての一覧 </a>
+
+        <!-- ページネーション -->
+            <?=$viewPagePrev?>
+            <?=$viewPagenation?>
+            <?=$viewPageNext?>
+        </div>
 
         <!-- 一覧 -->
         <div class="container jumbotron">
-        <table border="solid" margin="5px">
-        <tr>
-            <th>ID</th>
-            <th>書籍名</th>
-            <th>著者名</th>
-            <th>登録日</th>
-            <th>カテゴリ</th>
-            <th>要約</th>
-            <th>感想</th>
-            <th>ユーザーID</th> <!-- テスト用、あとで消す -->
-            <th>更新</th>
-            <th>削除</th>
-        </tr>
-            <?=$view?>
-        </table>
-
+            <table border="solid" margin="5px">
+                <tr>
+                    <th>ID</th>
+                    <th>書籍名</th>
+                    <th>著者名</th>
+                    <th>登録日</th>
+                    <th>カテゴリ</th>
+                    <th>要約</th>
+                    <th>感想</th>
+                    <th>ユーザーID</th> <!-- テスト用、あとで消す -->
+                    <th>更新</th>
+                    <th>削除</th>
+                </tr>
+                <?=$view?>
+            </table>
         </div>
+        
     </main>
 
 </body>

@@ -13,8 +13,14 @@ $summary = $_POST["summary"];
 $comment = $_POST["comment"];
 $user_id = $_SESSION["id"];
 
+// タグを分割
+$tags = preg_split("/[\s,]+/", $category);
+$tags = array_unique($tags);
+
+
 //2. DB接続
 $pdo = db_connect();
+
 
 //3. データ登録SQL作成
 $sql = "INSERT INTO gs_bm_table (book,author,datetime,category,summary,comment,user_id) VALUES(:book,:author,sysdate(),:category,:summary,:comment,:user_id)";
@@ -28,51 +34,62 @@ $stmt->bindValue(':user_id', $user_id, PDO::PARAM_INT);
 $status = $stmt->execute();
 $bm_id = $pdo->lastInsertId();
 
-// gs_bmtag_table.tag_nameに、$categoryと同値があるかを確認 ※ ※ ※
-$sqlTagSearch = "SELECT * FROM gs_bmtag_table WHERE tag_name = '".$category."'";
-$stmtTagSearch = $pdo->prepare($sqlTagSearch);
-$statusTagSearch = $stmtTagSearch->execute();
-$tagSearch = $stmtTagSearch->fetch(PDO::FETCH_ASSOC);
-$tag_id = $tagSearch["id"];
 
-$view = "";
-$categoryLen = strlen($category);
+// ただcount(distinct hoge) = 10x+1 のとき最後のページが表示されないっぽい
+foreach($tags as $tag){
 
-if($statusTagSearch == false){
-    sqlError($stmtTagSearch);
-    $view = "SQLエラー";
+    // gs_bmtag_table.tag_nameに、$categoryと同値があるかを確認
+    // $sqlTagSearch = "SELECT * FROM gs_bmtag_table WHERE tag_name = '".$category."'";
+    $sqlTagSearch = "SELECT * FROM gs_bmtag_table WHERE tag_name = '".$tag."'"; // test
+    $stmtTagSearch = $pdo->prepare($sqlTagSearch);
+    $statusTagSearch = $stmtTagSearch->execute();
+    $tagSearch = $stmtTagSearch->fetch(PDO::FETCH_ASSOC);
+    $tag_id = $tagSearch["id"];
 
-}else if($categoryLen==0){
-    // カテゴリが未入力の場合
+    $view = "";
+    // $categoryLen = strlen($category);
+    $tagLen = strlen($tag); // test
+
+    if($statusTagSearch == false){
+        sqlError($stmtTagSearch);
+        $view = "SQLエラー";
+
+    // }else if($categoryLen==0){
+    }else if($tagLen==0){ 
+        // カテゴリが未入力の場合
+        // header("Location: index.php");
+        // exit;
+
+    }else if($tagSearch===false){
+        // gs_bmtag_tableに該当する値が存在しない場合
+        $sqlTagInsert = "INSERT INTO gs_bmtag_table (tag_name) VALUE (:tag_name)";
+        $stmtTagInsert = $pdo->prepare($sqlTagInsert);
+        // $stmtTagInsert->bindValue(':tag_name', $category, PDO::PARAM_STR);
+        $stmtTagInsert->bindValue(':tag_name', $tag, PDO::PARAM_STR); // test
+        $statusTagInsert = $stmtTagInsert->execute();
+        $tag_id = $pdo->lastInsertId();
+
+        $sqlBindInsert = "INSERT INTO gs_bmtag_bind (bm_id, tag_id) VALUE (:bm_id, :tag_id)";
+        $stmtBindInsert = $pdo->prepare($sqlBindInsert);
+        $stmtBindInsert->bindValue(':bm_id', $bm_id, PDO::PARAM_INT);
+        $stmtBindInsert->bindValue(':tag_id', $tag_id, PDO::PARAM_INT);
+        $statusBindInsert = $stmtBindInsert->execute();
+        // header("Location: index.php");
+        // exit;
+
+    }else{
+        // gs_bmtag_tableに該当する値が存在する場合
+        $sqlBindInsert = "INSERT INTO gs_bmtag_bind (bm_id, tag_id) VALUE (:bm_id, :tag_id)";
+        $stmtBindInsert = $pdo->prepare($sqlBindInsert);
+        $stmtBindInsert->bindValue(':bm_id', $bm_id, PDO::PARAM_INT);
+        $stmtBindInsert->bindValue(':tag_id', $tag_id, PDO::PARAM_INT);
+        $statusBindInsert = $stmtBindInsert->execute();
+        // header("Location: index.php");
+        // exit;
+
+    }
+
     header("Location: index.php");
-    exit;
-
-}else if($tagSearch===false){
-    // gs_bmtag_tableに該当する値が存在しない場合
-    $sqlTagInsert = "INSERT INTO gs_bmtag_table (tag_name) VALUE (:tag_name)";
-    $stmtTagInsert = $pdo->prepare($sqlTagInsert);
-    $stmtTagInsert->bindValue(':tag_name', $category, PDO::PARAM_STR);
-    $statusTagInsert = $stmtTagInsert->execute();
-    $tag_id = $pdo->lastInsertId();
-
-    $sqlBindInsert = "INSERT INTO gs_bmtag_bind (bm_id, tag_id) VALUE (:bm_id, :tag_id)";
-    $stmtBindInsert = $pdo->prepare($sqlBindInsert);
-    $stmtBindInsert->bindValue(':bm_id', $bm_id, PDO::PARAM_INT);
-    $stmtBindInsert->bindValue(':tag_id', $tag_id, PDO::PARAM_INT);
-    $statusBindInsert = $stmtBindInsert->execute();
-    header("Location: index.php");
-    exit;
-
-}else{
-    // gs_bmtag_tableに該当する値が存在する場合
-    $sqlBindInsert = "INSERT INTO gs_bmtag_bind (bm_id, tag_id) VALUE (:bm_id, :tag_id)";
-    $stmtBindInsert = $pdo->prepare($sqlBindInsert);
-    $stmtBindInsert->bindValue(':bm_id', $bm_id, PDO::PARAM_INT);
-    $stmtBindInsert->bindValue(':tag_id', $tag_id, PDO::PARAM_INT);
-    $statusBindInsert = $stmtBindInsert->execute();
-    header("Location: index.php");
-    exit;
-
 }
 
 ?>

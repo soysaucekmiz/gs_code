@@ -5,22 +5,90 @@ include "funcs.php";
 chkSsid();
 
 // GETデータ取得
-$id = $_GET["id"];
+$bm_id = $_GET["id"];
 
 // DB接続
 $pdo = db_connect();
 
-// データ更新SQL
-$sql = "SELECT * FROM gs_bm_table WHERE id=:id";
-$stmt = $pdo->prepare($sql);
-$stmt->bindValue(":id", $id, PDO::PARAM_STR);
-$status = $stmt->execute();
 
-// データ表示
-if($status==false){
-    sqlError($stmt);
+
+// データ更新SQL
+
+// ver.1
+// $sql = "SELECT * FROM gs_bm_table WHERE id=:bm_id";
+
+// ver.2
+// $sql = "SELECT ";
+// $sql .= "gs_bm_table.id AS bm_id, "; // idをbm_idに変更！！！
+// $sql .= "gs_bm_table.book AS book, ";
+// $sql .= "gs_bm_table.author AS author, ";
+// $sql .= "gs_bm_table.summary AS summary, ";
+// $sql .= "gs_bm_table.comment AS comment, ";
+// $sql .= "GROUP_CONCAT(gs_bmtag_table.tag_name SEPARATOR ', ') AS tag_names "; //tagが未登録の場合に全て表示されなくなる
+// $sql .= "FROM ";
+// $sql .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
+// $sql .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
+// $sql .= "WHERE bm_id=:bm_id ";
+// $sql .= "GROUP BY bm_id";
+// $stmt = $pdo->prepare($sql);
+// $stmt->bindValue(":bm_id", $bm_id, PDO::PARAM_INT);
+// $status = $stmt->execute();
+
+// // データ表示
+// if($status==false){
+//     sqlError($stmt);
+// }else{
+//     $row = $stmt->fetch();
+//     // $tags = $row["tag_names"];
+// }
+
+
+// ver.3 タグの存在チェック
+$sqlBindSearch = "SELECT * FROM gs_bmtag_bind WHERE bm_id = :bm_id";
+$stmtBindSearch = $pdo->prepare($sqlBindSearch);
+$stmtBindSearch->bindValue(":bm_id", $bm_id, PDO::PARAM_INT);
+$statusBindSearch = $stmtBindSearch->execute();
+$bindSearch = $stmtBindSearch->fetch(PDO::FETCH_ASSOC); // 1つでもあれば良いのでwhileは省略
+// var_dump($bindSearch);
+
+if($bindSearch === false){
+    $sql = "SELECT * FROM gs_bm_table WHERE id = :bm_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(":bm_id", $bm_id, PDO::PARAM_INT);
+    $status = $stmt->execute();
+
+    // データ表示
+    if($status==false){
+        sqlError($stmt);
+    }else{
+        $row = $stmt->fetch();
+        $tags = "";
+    }
+
 }else{
-    $row = $stmt->fetch();
+    $sql = "SELECT ";
+    $sql .= "gs_bm_table.id AS bm_id, "; // idをbm_idに変更！！！
+    $sql .= "gs_bm_table.book AS book, ";
+    $sql .= "gs_bm_table.author AS author, ";
+    $sql .= "gs_bm_table.summary AS summary, ";
+    $sql .= "gs_bm_table.comment AS comment, ";
+    $sql .= "GROUP_CONCAT(gs_bmtag_table.tag_name SEPARATOR ', ') AS tag_names "; //tagが未登録の場合に全て表示されなくなる
+    $sql .= "FROM ";
+    $sql .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
+    $sql .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
+    $sql .= "WHERE bm_id=:bm_id ";
+    $sql .= "GROUP BY bm_id";
+    $stmt = $pdo->prepare($sql);
+    $stmt->bindValue(":bm_id", $bm_id, PDO::PARAM_INT);
+    $status = $stmt->execute();
+
+    // データ表示
+    if($status==false){
+        sqlError($stmt);
+    }else{
+        $row = $stmt->fetch();
+        $tags = $row["tag_names"];
+    }
 }
 
 ?>
@@ -59,11 +127,14 @@ if($status==false){
                 <legend>ブックリスト</legend>
                 <label>書籍名：<input type="text" name="book" value="<?=$row["book"]?>"></label><br>
                 <label>著者名：<input type="text" name="author" value="<?=$row["author"]?>"></label><br>
-                <label>カテゴリ：<textarea name="category" rows="1" cols="40"><?=$row["category"]?></textarea></label><br>
+                <!-- <label>カテゴリ：<textarea name="category" rows="1" cols="40"><?php //$row["category"]?></textarea></label><br> -->
+                <!-- <label>カテゴリ：<textarea name="category" rows="1" cols="40"><?php //$row["tag_names"]?></textarea></label><br> -->
+                <label>カテゴリ：<textarea name="category" rows="1" cols="40"><?=$tags?></textarea></label><br>
                 <label><input type="hidden" name="category_origin" value="<?=$row["category"]?>"></label><br> <!-- 元のcategoryの値をPOSTするため -->
                 <label>要約：<textarea name="summary" rows="4" cols="40"><?=$row["summary"]?></textarea></label><br>
                 <label>感想：<textarea name="comment" rows="4" cols="40"><?=$row["comment"]?></textarea></label><br>
-                <label><input type="hidden" name="id" value="<?=$row["id"]?>"></label>
+                <!-- <label><input type="hidden" name="id" value="<?php //$row["id"]?>"></label> -->
+                <label><input type="hidden" name="id" value="<?=$row["bm_id"]?>"></label>
                 <input type="submit" values="更新">
             </fieldset>
         </div>
