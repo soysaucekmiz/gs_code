@@ -35,36 +35,29 @@ $status = $stmt->execute();
 $bm_id = $pdo->lastInsertId();
 
 
-// ただcount(distinct hoge) = 10x+1 のとき最後のページが表示されないっぽい
 foreach($tags as $tag){
 
     // gs_bmtag_table.tag_nameに、$categoryと同値があるかを確認
-    // $sqlTagSearch = "SELECT * FROM gs_bmtag_table WHERE tag_name = '".$category."'";
-    $sqlTagSearch = "SELECT * FROM gs_bmtag_table WHERE tag_name = '".$tag."'"; // test
+    $sqlTagSearch = "SELECT * FROM gs_bmtag_table WHERE tag_name = '".$tag."'";
     $stmtTagSearch = $pdo->prepare($sqlTagSearch);
     $statusTagSearch = $stmtTagSearch->execute();
     $tagSearch = $stmtTagSearch->fetch(PDO::FETCH_ASSOC);
     $tag_id = $tagSearch["id"];
 
     $view = "";
-    // $categoryLen = strlen($category);
-    $tagLen = strlen($tag); // test
+    $tagLen = strlen($tag);
 
     if($statusTagSearch == false){
         sqlError($stmtTagSearch);
         $view = "SQLエラー";
 
-    // }else if($categoryLen==0){
     }else if($tagLen==0){ 
         // カテゴリが未入力の場合
-        // header("Location: index.php");
-        // exit;
 
     }else if($tagSearch===false){
         // gs_bmtag_tableに該当する値が存在しない場合
         $sqlTagInsert = "INSERT INTO gs_bmtag_table (tag_name) VALUE (:tag_name)";
         $stmtTagInsert = $pdo->prepare($sqlTagInsert);
-        // $stmtTagInsert->bindValue(':tag_name', $category, PDO::PARAM_STR);
         $stmtTagInsert->bindValue(':tag_name', $tag, PDO::PARAM_STR); // test
         $statusTagInsert = $stmtTagInsert->execute();
         $tag_id = $pdo->lastInsertId();
@@ -74,8 +67,6 @@ foreach($tags as $tag){
         $stmtBindInsert->bindValue(':bm_id', $bm_id, PDO::PARAM_INT);
         $stmtBindInsert->bindValue(':tag_id', $tag_id, PDO::PARAM_INT);
         $statusBindInsert = $stmtBindInsert->execute();
-        // header("Location: index.php");
-        // exit;
 
     }else{
         // gs_bmtag_tableに該当する値が存在する場合
@@ -84,8 +75,6 @@ foreach($tags as $tag){
         $stmtBindInsert->bindValue(':bm_id', $bm_id, PDO::PARAM_INT);
         $stmtBindInsert->bindValue(':tag_id', $tag_id, PDO::PARAM_INT);
         $statusBindInsert = $stmtBindInsert->execute();
-        // header("Location: index.php");
-        // exit;
 
     }
 

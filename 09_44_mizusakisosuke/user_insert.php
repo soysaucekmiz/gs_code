@@ -2,8 +2,6 @@
 include "funcs.php";
 
 //1. POSTデータ取得
-//$name = filter_input( INPUT_GET, ","name" ); //こういうのもあるよ
-//$email = filter_input( INPUT_POST, "email" ); //こういうのもあるよ
 $name = $_POST["name"];
 $lid = $_POST["lid"];
 $lpw = $_POST["lpw"];

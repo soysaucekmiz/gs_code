@@ -25,8 +25,6 @@ if($statusBindSearch==false){
         $bind_ids[] = $resultBindSearch["id"];
     }
 }
-// $bindSearch = $stmtBindSearch->fetch(PDO::FETCH_ASSOC);
-// $bind_id = $bindSearch["id"];
 
 // 実行
 if($statusBmDelete==false){
@@ -35,13 +33,6 @@ if($statusBmDelete==false){
     if($statusBindSearch===false){
         // echo "タグはありませんでした。";
     }else{
-        // $sqlBindDelete = "DELETE FROM gs_bmtag_bind WHERE id=:id";
-        // $stmtBindDelete = $pdo->prepare($sqlBindDelete);
-        // $stmtBindDelete->bindValue(":id", $bind_id, PDO::PARAM_INT);
-        // $statusBindDelete = $stmtBindDelete->execute();
-        // echo "旧タグ k -> 新タグ NULL";
-        // var_dump($bind_ids); // test ok
-
         foreach($bind_ids as $bind_id){
             $sqlBindDelete = "DELETE FROM gs_bmtag_bind WHERE id = :bind_id";
             $stmtBindDelete = $pdo->prepare($sqlBindDelete);
@@ -49,9 +40,7 @@ if($statusBmDelete==false){
             $statusBindDelete = $stmtBindDelete->execute();
             echo "bind_id: ".$bind_id." を削除しました。";
         }
-
     }
-    // echo "削除されました。";
 }
 
 header("Location: select.php");

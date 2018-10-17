@@ -30,11 +30,9 @@ $sql .= "gs_bm_table.author AS author, ";
 $sql .= "gs_bm_table.datetime AS datetime, ";
 $sql .= "gs_bm_table.summary AS summary, ";
 $sql .= "gs_bm_table.comment AS comment, ";
-$sql .= "gs_bm_table.user_id AS user_id, "; // テスト確認用、あとで消す
-// $sql .= "gs_bmtag_table.id AS tag_id, ";
-$sql .= "GROUP_CONCAT(gs_bmtag_table.id SEPARATOR ',') AS tag_ids, "; // test
-// $sql .= "gs_bmtag_table.tag_name AS tag_name ";
-$sql .= "GROUP_CONCAT(gs_bmtag_table.tag_name SEPARATOR ',') AS tag_names "; // test
+$sql .= "gs_bm_table.user_id AS user_id, ";
+$sql .= "GROUP_CONCAT(gs_bmtag_table.id SEPARATOR ',') AS tag_ids, ";
+$sql .= "GROUP_CONCAT(gs_bmtag_table.tag_name SEPARATOR ',') AS tag_names ";
 $sql .= "FROM ";
 $sql .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
 $sql .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
@@ -44,9 +42,6 @@ $sql .= "WHERE user_id = ".$user_id." ";
 if(isset($_GET["tag_id"])){
     $tag_id = $_GET["tag_id"];
     $sql .= "AND tag_id = ".$tag_id." ";
-    // memo: 
-    //この書き方だと複数タグがあるレコードでも、
-    // ?tag_id=kで絞り込まれた場合にはkしか表示されなくなる
 }
 
 if(isset($_GET["searchKw"])){
@@ -54,7 +49,7 @@ if(isset($_GET["searchKw"])){
     $sql .= "AND ( book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%' ) ";    
 }
 
-$sql .= "GROUP BY bm_id "; // test
+$sql .= "GROUP BY bm_id ";
 
 $sql .= "ORDER BY gs_bm_table.id ";
 $sql .= "LIMIT $start, 10";
@@ -69,24 +64,22 @@ if($status==false){
     while($result = $stmt->fetch(PDO::FETCH_ASSOC)){ 
         $tag_id = explode(',', $result["tag_ids"]);
         $tag_name = explode(',', $result["tag_names"]);
-        // count($tag_id);
 
         $view .= "<tr>";
         $view .= "<td>".$result["bm_id"]."</td>";
         $view .= "<td>".$result["book"]."</td>";
         $view .= "<td>".$result["author"]."</td>";
         $view .= "<td>".$result["datetime"]."</td>";
-        // $view .= '<td><a href="select.php?tag_id='.$result["tag_ids"].'">'.$result["tag_names"].'</a></td>'; // あとでaタグでtag_idに遷移させる
 
         $view .= '<td>';
         for($i=0; $i<count($tag_id); $i++){
-            $view .= '<a href="select.php?tag_id='.$tag_id[$i].'">'.$tag_name[$i].' </a>'; // あとでaタグでtag_idに遷移させる
+            $view .= '<a href="select.php?tag_id='.$tag_id[$i].'">'.$tag_name[$i].' </a>';
         }
         $view .= '</td>';
 
         $view .= "<td>".$result["summary"]."</td>";
         $view .= "<td>".$result["comment"]."</td>";
-        $view .= "<td>".$result["user_id"]."</td>"; // テスト確認用、あとで消す
+        $view .= "<td>".$result["user_id"]."</td>";
         $view .= '<td><a href="update_view.php?id='.$result["bm_id"].'">[更新]</a></td>';
         $view .= '<td><a href="delete.php?id='.$result["bm_id"].'">[削除]</a></td>';
         $view .= "</tr>";
@@ -95,15 +88,10 @@ if($status==false){
 
 
 // ページネーション (2)
-// $sqlPageCount = "SELECT COUNT(*) AS count FROM ";
-
-// test ここから
 $sqlPageCount = "SELECT ";
 $sqlPageCount .= "gs_bm_table.id AS bm_id, ";
 $sqlPageCount .= "GROUP_CONCAT(gs_bmtag_table.id SEPARATOR ',') AS tag_ids, ";
 $sqlPageCount .= "COUNT(distinct bm_id) AS count FROM ";
-// test ここまで
-
 $sqlPageCount .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
 $sqlPageCount .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
 $sqlPageCount .= "WHERE user_id = ".$user_id." ";
@@ -115,8 +103,7 @@ if(isset($_GET["searchKw"])){
     $searchKw = $_GET["searchKw"];
     $sqlPageCount .= "AND (book LIKE '%".$searchKw."%' OR author LIKE '%".$searchKw."%' OR category LIKE '%".$searchKw."%' OR summary LIKE '%".$searchKw."%' OR comment LIKE '%".$searchKw."%') ";    
 }
-
-$sql .= "GROUP BY bm_id"; // test
+$sql .= "GROUP BY bm_id";
 
 $stmtPageCount = $pdo->prepare($sqlPageCount);
 $statusPageCount = $stmtPageCount->execute();
@@ -152,7 +139,6 @@ if($page==1){
 
 
 // tagの数を数えて降順でならべかえる
-// $sqlTagCount = "SELECT tag_id, count(*) FROM gs_bmtag_bind GROUP BY tag_id ORDER BY count(*) DESC";
 $sqlTagCount = "";
 $sqlTagCount .= "SELECT ";
 $sqlTagCount .= "gs_bm_table.id AS bm_id, ";
@@ -160,7 +146,6 @@ $sqlTagCount .= "gs_bmtag_bind.tag_id AS tag_id, ";
 $sqlTagCount .= "gs_bmtag_table.tag_name AS tag_name, ";
 $sqlTagCount .= "count(*) ";
 $sqlTagCount .= "FROM ";
-// $sqlTagCount .= "gs_bmtag_bind LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
 $sqlTagCount .= "gs_bm_table LEFT OUTER JOIN gs_bmtag_bind ON gs_bm_table.id = gs_bmtag_bind.bm_id ";
 $sqlTagCount .= "LEFT OUTER JOIN gs_bmtag_table ON gs_bmtag_bind.tag_id = gs_bmtag_table.id ";
 $sqlTagCount .= "WHERE user_id = ".$user_id." ";
@@ -182,11 +167,10 @@ if($statusTagCount==false){
 ?>
 
 <!DOCTYPE html>
-<html> <!-- lang="ja" は一旦書かない  -->
+<html>
 
 <head>
     <meta charset="utf-8">
-    <!-- <meta http-equiv="X-UA-Compatible" content="IE=edge"> -->
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>読書メモ一覧</title>
     <link rel="stylesheet" href="css/range.css">
@@ -194,7 +178,7 @@ if($statusTagCount==false){
     <style>div{padding: 10px; font-size: 16px;}</style>
 </head>
 
-<body> <!-- id="main"は一旦除外 -->
+<body>
     <header>
         <nav class="navbar navbar-default">
             <div class="container-fluid">
@@ -241,7 +225,7 @@ if($statusTagCount==false){
                     <th>カテゴリ</th>
                     <th>要約</th>
                     <th>感想</th>
-                    <th>ユーザーID</th> <!-- テスト用、あとで消す -->
+                    <th>ユーザーID</th>
                     <th>更新</th>
                     <th>削除</th>
                 </tr>
