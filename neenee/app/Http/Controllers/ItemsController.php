@@ -6,9 +6,19 @@ use Illuminate\Http\Request;
 
 use App\Item;
 use Validator;
+use Auth;
 
 class ItemsController extends Controller
 {
+    /*
+    |--------------------------------------------------------------------------
+    | Constructor（auth認証）
+    |--------------------------------------------------------------------------
+    */
+    public function __construct(){
+        $this->middleware('auth');
+    }
+
     /*
     |--------------------------------------------------------------------------
     | Create
@@ -41,6 +51,7 @@ class ItemsController extends Controller
         }
         // Eloquent Model
         $items = new Item;
+        $items->user_id = Auth::user()->id;
         $items->item_name = $request->item_name;
         $items->item_comment = $request->item_comment;
         $items->item_description = $request->item_description;
@@ -51,7 +62,7 @@ class ItemsController extends Controller
         $items->item_img3 = $request->item_img3;
         $items->save();
         // リダイレクト
-        return redirect('home');
+        return redirect('items_list_sell');
     }
 
 
@@ -63,12 +74,21 @@ class ItemsController extends Controller
 
     // アイテム 一覧 検索 (画面) = ホーム
     public function show(){
-        $items = Item::orderBy('created_at', 'asc')->get();
+        $items = Item::orderBy('created_at', 'desc')->paginate(3);
         return view('items_list_search', [
             'items' => $items,
         ]);
     }
 
+    // アイテム 一覧 出品 (画面) ※あとでviewとauth追加！！
+    public function showSellingItems(){
+        $items = Item::where('user_id', Auth::user()->id)
+            ->orderBy('created_at', 'desc')
+            ->paginate(3);
+        return view('items_list_sell', [
+            'items' => $items,
+        ]);
+    }
 
     /*
     |--------------------------------------------------------------------------
@@ -77,7 +97,8 @@ class ItemsController extends Controller
     */
 
     // アイテム 編集 出品 (画面)
-    public function edit(Item $items){
+    public function edit($item_id){
+        $items = Item::where('user_id', Auth::user()->id)->find($item_id);
         return view('items_edit', [
             'item' => $items
         ]);
@@ -104,7 +125,7 @@ class ItemsController extends Controller
                 ->withErrors($validator);
         }
         // データ更新
-        $items = Item::find($request->id);
+        $items = Item::where('user_id', Auth::user()->id)->find($request->id);
         $items->item_name = $request->item_name;
         $items->item_comment = $request->item_comment;
         $items->item_description = $request->item_description;
@@ -115,7 +136,7 @@ class ItemsController extends Controller
         $items->item_img3 = $request->item_img3;
         $items->save();
         // リダイレクト
-        return redirect('items_list_search');
+        return redirect('items_list_sell');
     }
 
 
@@ -125,11 +146,16 @@ class ItemsController extends Controller
     |--------------------------------------------------------------------------
     */
 
-    // アイテム 削除 出品 (delete) ※優先度低い
+    // アイテム 削除 出品 (delete) 
     public function destroy(Item $item){
         $item->delete();
-        return redirect('home');    
+        return redirect('items_list_sell');    
     }
-
+    // 下記、user_idが一致するものだけ削除許可しようと思ったがうまくいかなかった
+    // public function destroy(Request $request){
+    //     $items = Item::where('user_id', Auth::user()->id)->find($request->id);
+    //     $items->delete();
+    //     return redirect('home');
+    // }
 
 }

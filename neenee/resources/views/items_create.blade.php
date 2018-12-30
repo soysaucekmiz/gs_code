@@ -1,5 +1,12 @@
 @extends('layouts.app')
 @section('content')
+
+    <div>
+        <a href="{{url('/items_create')}}">アイテム出品（登録）</a>
+        <a href="{{url('/items_list_search')}}">アイテム一覧（検索）</a>
+        <a href="{{url('/items_list_sell')}}">アイテム一覧（出品）</a>        
+    </div>
+
     <div>
         <!-- バリデーションエラー用 -->
         @include('common.errors')

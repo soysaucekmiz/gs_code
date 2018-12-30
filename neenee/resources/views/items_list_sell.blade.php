@@ -32,25 +32,25 @@
                     <div>{{$item->item_img2}}</div>
                     <div>{{$item->item_img3}}</div>
 
-                    <!-- 本の更新ボタン ※マイページ系からのみのため削除 -->
-                    <!-- <td>
+                    <!-- 本の更新ボタン -->
+                    <td>
                         <form action="{{url('items_edit/'.$item->id)}}" method="POST">
                             {{ csrf_field() }}
                             <button type="submit" class="btn btn-primary">
                                 <i class="glyphicon glyphicon-pencil"></i>更新
                             </button>
                         </form>
-                    </td> -->
+                    </td>
                     
-                    <!-- 本の削除ボタン ※マイページ系からのみのため削除 -->
-                    <!-- <td>
+                    <!-- 本の削除ボタン -->
+                    <td>
                         <form action="{{url('items/delete/'.$item->id)}}" method="POST">
                             {{ csrf_field() }}
                             <button type="submit" class="btn btn-danger">
                                 <i class="glyphicon glyphicon-trash"></i>削除
                             </button>
                         </form>
-                    </td> -->
+                    </td>
 
                     <br>
                 </div>

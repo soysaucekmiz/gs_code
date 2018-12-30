@@ -1,5 +1,12 @@
 @extends('layouts.app')
 @section('content')
+
+    <!-- <div>
+        <a href="{{url('/items_create')}}">アイテム出品（登録）</a>
+        <a href="{{url('/items_list_search')}}">アイテム一覧（検索）</a>
+        <a href="{{url('/items_list_sell')}}">アイテム一覧（出品）</a>        
+    </div> -->
+
     <div>
         <!-- バリデーションエラー用 -->
         @include('common.errors')
@@ -8,6 +15,9 @@
         <form action="{{url('/items/update')}}" method="post">
             {{ csrf_field() }}
             
+            <!-- id -->
+            <input type="hidden" name="id" value="{{$item->id}}" />
+
             <!-- item_name -->
             <div class="form-group">
                 <label for="item_name">アイテム名</label>
@@ -62,11 +72,11 @@
                     <button type="submit" class="btn btn-default">
                         <i class="glyphicon glyphicon-plus"></i>登録
                     </button>
+                    <a class="btn btn-link pull-right" href="{{ url('/items_list_sell') }}">
+                        <i class="glyphicon glyphicon-backward"></i>Back
+                    </a>
                 </div>
             </div>
-
-            <!-- id -->
-            <input type="hidden" name="id" value="{{$item->id}}" />
 
         </form>
     </div>
